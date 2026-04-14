@@ -2,7 +2,6 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Firebase config from Vercel environment variables
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -12,13 +11,11 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize services
 export const auth = getAuth(app);
 
-// ✅ IMPORTANT FIX: add your Firestore Database ID
+// 🔥 IMPORTANT: use custom DB
 export const db = getFirestore(
   app,
   "ai-studio-9aeec45c-7153-4b2c-8795-4ad64e8419ab"
