@@ -13,12 +13,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+// ✅ Auth
 export const auth = getAuth(app);
 
-// 🔥 IMPORTANT: use custom DB
-export const db = getFirestore(
-  app,
-  "ai-studio-9aeec45c-7153-4b2c-8795-4ad64e8419ab"
-);
+// ✅ Firestore (CORRECT)
+export const db = getFirestore(app);
 
+// ✅ Google login
 export const googleProvider = new GoogleAuthProvider();
