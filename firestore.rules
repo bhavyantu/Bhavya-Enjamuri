@@ -1,0 +1,92 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {uid}
+    // Fields:
+    //   - email: string (required)
+    //   - role: string (required, ['user', 'faculty', 'representer'])
+    //   - displayName: string
+    //   - uid: string (required)
+    //
+    // Collection: episodes
+    // Document ID: {episodeId}
+    // Fields:
+    //   - topic: string (required)
+    //   - host: string (required)
+    //   - guestNames: list (required)
+    //   - guestEmails: list
+    //   - assignDate: timestamp
+    //   - status: string (required, ['pending', 'drafted', 'recorded'])
+    //   - summary: string
+    //   - createdBy: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isRepresenter() {
+      return isAuthenticated() && (
+        (request.auth.token.email == "24091a3324@rgmcet.edu.in" && request.auth.token.email_verified == true) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'representer')
+      );
+    }
+
+    function isFaculty() {
+      return isAuthenticated() && getUserData().role == 'faculty';
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'role', 'uid']) &&
+             data.email is string &&
+             data.role in ['user', 'faculty', 'representer'] &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidEpisode(data) {
+      return data.keys().hasAll(['topic', 'host', 'status', 'createdBy', 'createdAt']) &&
+             data.topic is string && data.topic.size() > 0 && data.topic.size() < 500 &&
+             data.host is string && data.host.size() > 0 &&
+             data.status in ['pending', 'drafted', 'recorded'] &&
+             data.createdBy is string &&
+             data.guestNames is list &&
+             (!('guestEmails' in data) || data.guestEmails is list) &&
+             (!('assignDate' in data) || data.assignDate == null || data.assignDate is timestamp);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == 'user' || isRepresenter());
+      allow update: if isAuthenticated() && (isRepresenter() || (isOwner(userId) && request.resource.data.role == resource.data.role && isValidUser(request.resource.data)));
+    }
+
+    match /episodes/{episodeId} {
+      allow read: if isAuthenticated();
+      allow create: if isRepresenter() && isValidEpisode(request.resource.data);
+      allow update: if isRepresenter() || isFaculty();
+      allow delete: if isRepresenter();
+    }
+  }
+}

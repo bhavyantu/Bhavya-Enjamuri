@@ -1,0 +1,43 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and role information",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["user", "faculty", "representer"] },
+        "displayName": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["email", "role", "uid"]
+    },
+    "Episode": {
+      "title": "Episode",
+      "description": "Podcast episode details",
+      "type": "object",
+      "properties": {
+        "topic": { "type": "string" },
+        "host": { "type": "string" },
+        "guestNames": { "type": "array", "items": { "type": "string" } },
+        "guestEmails": { "type": "array", "items": { "type": "string", "format": "email" } },
+        "assignDate": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["pending", "drafted", "recorded"] },
+        "summary": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["topic", "host", "status", "createdBy"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/episodes/{episodeId}": {
+      "schema": "Episode",
+      "description": "Podcast episodes"
+    }
+  }
+}
